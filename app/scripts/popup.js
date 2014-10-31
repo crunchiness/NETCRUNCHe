@@ -1,3 +1,6 @@
 'use strict';
 
-console.log('\'Allo \'Allo! Popup');
+angular.module('popupApp', [])
+.controller('popupCtrl', ['$scope', function ($scope) {
+    $scope.heading = 'Things';
+  }]);
