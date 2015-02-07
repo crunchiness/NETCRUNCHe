@@ -11,6 +11,7 @@
 </head>
 <body ng-controller="mainCtrl" style="margin:0">
     <div id="statistics">
+        space used = {{space | bytes}}<br>
         requests collected = {{statistics.size}}
         <ul>
             <li ng-repeat="website in statistics.websites">
@@ -19,7 +20,8 @@
         </ul>
     </div>
     <div>
-      <textarea style="width:49vw; height: 400px; padding:0;" ng-model="pairs"></textarea>
+        <!--<textarea style="width:49vw; height: 400px; padding:0;" ng-model="pairs"></textarea>-->
+        <a download="data.json" ng-href="{{url}}" style="display: block">Download</a>
     </div>
 </body>
 </html>
