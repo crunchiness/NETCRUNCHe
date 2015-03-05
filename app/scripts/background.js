@@ -21,7 +21,7 @@ var pairs;
  *   inStoreK
  */
 var statistics;
-
+var serviceList = ['youtube.com', 'facebook.com', 'tumblr.com'];
 var writeEvery = 200;
 
 function addRequest(domain, request) {
@@ -73,6 +73,7 @@ chrome.storage.local.get(null, function (data) {
   if (('pairs' in data) && ('statistics' in data)) {
     pairs = enrichPairs(data.pairs);
     statistics = data.statistics;
+    serviceList = data.serviceList;
   } else {
     pairs = enrichPairs();
     statistics = {
@@ -105,6 +106,9 @@ chrome.runtime.onConnect.addListener(function (port) {
 
 function simpleDomain(url) {
   var matches = url.match(/^https?\:\/\/([^\/?#]+)(?:[\/?#]|$)/i);
+  var domain = matches[1];
+  if (domain.substr(0,4) === 'www.')
+    return domain.substr(4);
   return matches[1];
 }
 
@@ -118,7 +122,8 @@ function writeToStorage() {
   statistics.inStoreK = (statistics.size - (statistics.size % writeEvery)) / writeEvery;
   chrome.storage.local.set({
     pairs: preparePairsStorage(pairs),
-    statistics: statistics
+    statistics: statistics,
+    serviceList: serviceList
   }, function (data) {
     console.log('Successfully written to storage.');
   });
@@ -135,6 +140,8 @@ chrome.webRequest.onSendHeaders.addListener(
     //https://code.google.com/p/chromium/issues/detail?id=410868
     chrome.tabs.get(id, function (data) {
       var domain = simpleDomain(data.url);
+      if (serviceList.indexOf(domain) === -1)
+        return;
       statistics.size += 1;
       if (domain in statistics.websites) {
         statistics.websites[domain].size += 1;
@@ -155,7 +162,6 @@ chrome.webRequest.onCompleted.addListener(
   function (details) {
     if (details.url.substr(0, 6) === 'chrome') return;
     pairs.addResponse(details);
-    statistics.size += 1;
   },
   {urls: ['<all_urls>']},
   ['responseHeaders']);
