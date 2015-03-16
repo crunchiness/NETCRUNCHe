@@ -23,6 +23,21 @@ var pairs;
 var statistics;
 var serviceList = ['youtube.com', 'facebook.com', 'tumblr.com'];
 var writeEvery = 200;
+/* Active Tab over time
+ *
+ * objects:
+ *  {timeStamp, tabId}
+ */
+var activeTab = [];
+/* Tab changes over time (which service opened in tab)
+ *
+ * keys:
+ *  tabId
+ *
+ * objects:
+ *  {timeStamp, website}
+ */
+var tabChanges = {};
 
 function addRequest(domain, request) {
   var id = request.requestId;
@@ -70,10 +85,12 @@ function preparePairsStorage(pairs) {
 }
 
 chrome.storage.local.get(null, function (data) {
-  if (('pairs' in data) && ('statistics' in data)) {
+  if (('pairs' in data) && ('statistics' in data) && ('activeTab' in data) && ('tabChanges' in data)) {
     pairs = enrichPairs(data.pairs);
     statistics = data.statistics;
     serviceList = data.serviceList;
+    activeTab = data.activeTab;
+    tabChanges = data.tabChanges;
   } else {
     pairs = enrichPairs();
     statistics = {
@@ -95,7 +112,13 @@ chrome.runtime.onConnect.addListener(function (port) {
     if (msg.get === 'statistics') {
       port.postMessage({statistics: statistics});
     } else if (msg.get === 'pairs') {
-      port.postMessage({pairs: pairs.websiteList});
+      port.postMessage({
+        data: {
+          pairs: pairs.websiteList,
+          activeTab: activeTab,
+          tabChanges: tabChanges
+        }
+      });
     } else if (msg.get === 'space') {
       chrome.storage.local.getBytesInUse(function(bytes) {
         port.postMessage({spaceBytes: bytes});
@@ -123,11 +146,63 @@ function writeToStorage() {
   chrome.storage.local.set({
     pairs: preparePairsStorage(pairs),
     statistics: statistics,
-    serviceList: serviceList
+    serviceList: serviceList,
+    activeTab: activeTab,
+    tabChanges: tabChanges
   }, function (data) {
     console.log('Successfully written to storage.');
   });
 }
+
+// updates tab address
+chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
+  if (changeInfo.status === 'loading') {
+    var now = Date.now();
+    var domain = simpleDomain(changeInfo.url);
+    var tabUpdate = {
+      website: domain,
+      timeStamp: now
+    };
+    if (tabId in tabChanges) {
+      if (tabChanges[tabId].length && tabChanges[tabId][tabChanges[tabId].length-1].website === domain) {
+        return;  // domain didn't change
+      }
+      tabChanges[tabId].push(tabUpdate);
+    } else {
+      tabChanges[tabId] = [tabUpdate];
+    }
+    console.info(tabChanges);
+  }
+});
+
+// tracks active tab
+chrome.tabs.onActivated.addListener(function(activeInfo) {
+  var id = activeInfo.tabId;
+  var now = Date.now();
+  var activeUpdate = {
+    id: id,
+    timeStamp: now
+  };
+  activeTab.push(activeUpdate);
+  chrome.tabs.get(id, function (data) {
+    var domain = simpleDomain(data.url);
+    var tabUpdate = {
+      website: domain,
+      timeStamp: now
+    };
+    if (id in tabChanges) {
+      if (tabChanges[id].length && tabChanges[id][tabChanges[id].length-1].website === domain) {
+        // user opened old tab
+        return
+      } else {
+        tabChanges[id].push(tabUpdate);
+      }
+    } else {
+      tabChanges[id] = [tabUpdate];
+    }
+    console.info(tabChanges, activeTab);
+  });
+});
 
 chrome.webRequest.onSendHeaders.addListener(
   function (details) {

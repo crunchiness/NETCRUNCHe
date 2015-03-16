@@ -19,10 +19,11 @@ var app = angular.module('mainApp', [])
     port.onMessage.addListener(function (msg) {
       if (msg.statistics) {
         $scope.statistics = msg.statistics;
-      } else if (msg.pairs) {
-        $scope.pairs = JSON.stringify(msg.pairs);
-        var blob = new Blob([$scope.pairs], {type: 'application/json'});
+      } else if (msg.data) {
+        var data = JSON.stringify(msg.data);
+        var blob = new Blob([data] , {type: 'application/json'});
         $scope.url = $window.URL.createObjectURL(blob);
+        console.log($scope.url);
         //$scope.url = (window.URL || window.webkitURL).createObjectURL(blob);
       } else if (msg.spaceBytes) {
         $scope.space = msg.spaceBytes;
