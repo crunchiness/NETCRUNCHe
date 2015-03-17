@@ -1,27 +1,42 @@
 <!DOCTYPE html>
 <html ng-app="mainApp">
 <head lang="en">
-    <meta charset="UTF-8">
-    <title>Main</title>
-    <!-- LIBRARIES -->
-    <script src="bower_components/angular/angular.min.js"></script>
-    <!-- build:js scripts/main.js -->
-    <script src="scripts/main.js"></script>
-    <!-- endbuild -->
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="styles/main.css">
+  <title>netcrunch</title>
+  <!-- LIBRARIES -->
+  <script src="bower_components/angular/angular.min.js"></script>
+  <!-- build:js scripts/main.js -->
+  <script src="scripts/main.js"></script>
+  <!-- endbuild -->
 </head>
 <body ng-controller="mainCtrl" style="margin:0">
-    <div id="statistics">
-        space used = {{space | bytes}}<br>
-        requests collected = {{statistics.size}}
-        <ul>
-            <li ng-repeat="website in statistics.websites">
-                {{website}}
-            </li>
-        </ul>
-    </div>
-    <div>
-        <!--<textarea style="width:49vw; height: 400px; padding:0;" ng-model="pairs"></textarea>-->
-        <a download="data.json" ng-href="{{url}}" style="display: block">Download</a>
-    </div>
+<div id="logo"><img src="images/netcrunch.png"></div>
+<div id="top-wrapper">
+  <div id="statistics">
+    space used = {{space | bytes}}<br>
+    requests collected = {{statistics.size}}<br><br>
+    <table>
+      <tr>
+        <td><b>Service</b></td>
+        <td><b># of req</b></td>
+      </tr>
+        <tr ng-repeat="website in statistics.websites">
+          <td>{{website.domain}}</td>
+          <td>{{website.size}}</td>
+        </tr>
+    </table>
+  </div>
+  <div id="services">
+    Service list:<br>
+    <textarea rows="20" cols="40" ng-model="serviceListString"></textarea><br>
+    <button ng-click="resetServiceList()">Reset</button>
+    <button ng-click="updateServiceList()">Save changes</button>
+  </div>
+</div>
+<div id="download-button">
+  <a download="data.json" ng-href="{{url}}" style="display: block">Download data</a><br>
+  <button ng-click="deleteData()">Delete data</button>
+</div>
 </body>
 </html>

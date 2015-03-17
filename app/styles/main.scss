@@ -2,3 +2,26 @@ $padding: 20px;
 body {
   padding: $padding;
 }
+
+#top-wrapper {
+  display: flex;
+  justify-content: center;
+}
+#logo {
+  text-align: center;
+  margin-bottom: 50px;
+}
+#statistics {
+  padding: 10px;
+  background-color: whitesmoke;
+  margin-right: 10px;
+}
+#services {
+  padding: 10px;
+  background-color: whitesmoke;
+  margin-left: 10px;
+}
+#download-button {
+  margin-top: 20px;
+  text-align: center;
+}

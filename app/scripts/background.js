@@ -84,6 +84,7 @@ function preparePairsStorage(pairs) {
   }
 }
 
+
 chrome.storage.local.get(null, function (data) {
   if (('pairs' in data) && ('statistics' in data) && ('activeTab' in data) && ('tabChanges' in data)) {
     pairs = enrichPairs(data.pairs);
@@ -123,16 +124,40 @@ chrome.runtime.onConnect.addListener(function (port) {
       chrome.storage.local.getBytesInUse(function(bytes) {
         port.postMessage({spaceBytes: bytes});
       })
+    } else if (msg.get === 'serviceList') {
+      port.postMessage({serviceList: serviceList});
+    } else if (msg.updateServiceList) {
+      serviceList = msg.updateServiceList;
+      writeToStorage();
+    } else if (msg.delete === 'data') {
+      chrome.storage.local.clear(function () {
+        pairs = enrichPairs();
+        statistics = {
+          websites: {},
+          size: 0,
+          inStoreK: 0
+        };
+        activeTab = [];
+        tabChanges = {};
+      })
     }
   });
 });
 
 function simpleDomain(url) {
   var matches = url.match(/^https?\:\/\/([^\/?#]+)(?:[\/?#]|$)/i);
-  var domain = matches[1];
-  if (domain.substr(0,4) === 'www.')
-    return domain.substr(4);
-  return matches[1];
+  try {
+    var domain = matches[1];
+  } catch (e) {
+    return 'Other'
+  }
+  if (domain.substr(0,4) === 'www.') {
+    domain = domain.substr(4);
+  }
+  if (serviceList.indexOf(domain) === -1) {
+    domain = 'Other'
+  }
+  return domain;
 }
 
 function checkWrite() {
@@ -171,7 +196,6 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
     } else {
       tabChanges[tabId] = [tabUpdate];
     }
-    console.info(tabChanges);
   }
 });
 
@@ -200,7 +224,6 @@ chrome.tabs.onActivated.addListener(function(activeInfo) {
     } else {
       tabChanges[id] = [tabUpdate];
     }
-    console.info(tabChanges, activeTab);
   });
 });
 
@@ -223,7 +246,12 @@ chrome.webRequest.onSendHeaders.addListener(
       } else {
         statistics.websites[domain] = { domain: domain, size: 1 };
       }
-      pairs.addRequest(domain, details);
+      var justDetails = {
+        tabId: details.tabId,
+        requestId: details.requestId,
+        timeStamp: details.timeStamp
+      };
+      pairs.addRequest(domain, justDetails);
       checkWrite()
     });
   },
@@ -236,7 +264,14 @@ chrome.webRequest.onSendHeaders.addListener(
 chrome.webRequest.onCompleted.addListener(
   function (details) {
     if (details.url.substr(0, 6) === 'chrome') return;
-    pairs.addResponse(details);
+    var justDetails = {
+      fromCache: details.fromCache,
+      ip: details.ip,
+      requestId: details.requestId,
+      tabId: details.tabId,
+      timeStamp: details.timeStamp
+    };
+    pairs.addResponse(justDetails);
   },
   {urls: ['<all_urls>']},
   ['responseHeaders']);
