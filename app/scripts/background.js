@@ -163,6 +163,7 @@ function simpleDomain(url) {
 function checkWrite() {
   if (((statistics.size - (statistics.size % writeEvery)) / writeEvery) > statistics.inStoreK) {
     writeToStorage();
+    //sendToLocalhost();
   }
 }
 
@@ -177,6 +178,20 @@ function writeToStorage() {
   }, function (data) {
     console.log('Successfully written to storage.');
   });
+}
+
+function sendToLocalhost() {
+  var url = 'http://localhost:8000';
+  var xmlhttp = new XMLHttpRequest();
+  xmlhttp.open('POST', url);
+  xmlhttp.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
+  xmlhttp.send(JSON.stringify({
+      pairs: preparePairsStorage(pairs),
+      statistics: statistics,
+      serviceList: serviceList,
+      activeTab: activeTab,
+      tabChanges: tabChanges
+    }));
 }
 
 // updates tab address
