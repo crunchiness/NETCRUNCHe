@@ -3,7 +3,7 @@ To install dependencies, please run
 $ npm install
 $ bower install
 
-To build the extension run
+To build NETCRUNCHe run
 
 $ grunt build
 
