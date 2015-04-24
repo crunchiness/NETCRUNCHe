@@ -7,7 +7,7 @@ var app = angular.module('mainApp', [])
       $compileProvider.aHrefSanitizationWhitelist(/^\s*(https?|ftp|mailto|blob|chrome-extension):/);
     }
   ])
-  .controller('mainCtrl', function ($scope, $timeout, $window) {
+  .controller('mainCtrl', ['$scope', '$timeout', '$window', function ($scope, $timeout, $window) {
     $scope.url = '';
     $scope.serviceList = [];
     var port = chrome.runtime.connect({name: 'mainToBackground'});
@@ -43,7 +43,7 @@ var app = angular.module('mainApp', [])
       port.postMessage({delete: 'data'});
       port.postMessage({get: 'space'});
     }
-  });
+  }]);
 
 app.filter('bytes', function () {
   return function (bytes, precision) {
