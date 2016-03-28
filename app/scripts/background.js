@@ -264,7 +264,8 @@ chrome.webRequest.onSendHeaders.addListener(
       var justDetails = {
         tabId: details.tabId,
         requestId: details.requestId,
-        timeStamp: details.timeStamp
+        timeStamp: details.timeStamp,
+        url: details.url
       };
       pairs.addRequest(domain, justDetails);
       checkWrite()
